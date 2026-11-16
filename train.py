@@ -35,6 +35,8 @@ def parse_args():
     parser.add_argument("--workers", type=int, default=CONFIG.workers)
     parser.add_argument("--resume", type=Path)
     parser.add_argument("--tiny-test", action="store_true", default=CONFIG.tiny_test)
+    parser.add_argument("--tiny-train-images", type=int, default=CONFIG.tiny_train_images)
+    parser.add_argument("--tiny-validation-images", type=int, default=CONFIG.tiny_validation_images)
     parser.add_argument("--no-validation", action="store_true")
     return parser.parse_args()
 
@@ -133,6 +135,40 @@ def save_checkpoint(path, model, optimizer, scheduler, epoch, best_val_loss, con
     }, path)
 
 
+def save_loss_plot(log_path, output_path):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    epochs = []
+    train_losses = []
+    val_epochs = []
+    val_losses = []
+    with log_path.open(newline="") as log_file:
+        for row in csv.DictReader(log_file):
+            epochs.append(int(row["epoch"]))
+            train_losses.append(float(row["train_total_loss"]))
+            if row["val_total_loss"]:
+                val_epochs.append(int(row["epoch"]))
+                val_losses.append(float(row["val_total_loss"]))
+
+    if not epochs:
+        return
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(epochs, train_losses, marker="o", label="Training loss")
+    if val_losses:
+        ax.plot(val_epochs, val_losses, marker="o", label="Validation loss")
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Total loss")
+    ax.set_title("DIOR Faster R-CNN loss")
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=160)
+    plt.close(fig)
+
+
 def main():
     args = parse_args()
     config = CONFIG
@@ -143,6 +179,8 @@ def main():
     config.batch_size = args.batch_size
     config.workers = args.workers
     config.tiny_test = args.tiny_test
+    config.tiny_train_images = args.tiny_train_images
+    config.tiny_validation_images = args.tiny_validation_images
     config.use_validation = not args.no_validation
 
     seed_everything(config.seed)
@@ -227,8 +265,9 @@ def main():
                 best_val_loss = selection_loss
                 save_checkpoint(run_dir / "best.pth", model, optimizer, scheduler,
                                 epoch + 1, best_val_loss, config)
+            save_loss_plot(log_path, run_dir / "loss_curves.png")
 
-    print(f"Finished. Checkpoints and log: {run_dir}")
+    print(f"Finished. Checkpoints, log, and loss plot: {run_dir}")
 
 
 if __name__ == "__main__":

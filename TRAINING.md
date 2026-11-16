@@ -9,10 +9,12 @@ The default dataset root is the repository directory and expects the extracted f
 Run the small end-to-end development job first:
 
 ```bash
-python3 train.py --data-root /path/to/DIOR --backbone resnet50 --tiny-test --epochs 1
+python3 train.py --data-root /path/to/DIOR --backbone resnet50 --tiny-test --tiny-train-images 2 --tiny-validation-images 1 --epochs 1
 ```
 
-The Colab notebook smoke test uses this same command and saves its outputs to Google Drive.
+The Colab notebook smoke test uses this command with a temporary output directory. Training runs save `loss_curves.png` in the same run directory as their checkpoints and CSV log. The plot shows training and validation loss by epoch.
+
+`train.py` uses Matplotlib to write the loss plot. Install it with `python3 -m pip install matplotlib` when training outside Colab.
 
 Run the full experiments with:
 

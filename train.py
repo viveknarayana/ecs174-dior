@@ -82,10 +82,12 @@ def make_loader(dataset, batch_size, shuffle, workers):
     )
 
 
-def run_train_epoch(model, loader, optimizer, device):
+def run_train_epoch(model, loader, optimizer, device, epoch, total_epochs):
     model.train()
     sums = {}
     batches = 0
+    images_seen = 0
+    started = time.perf_counter()
     for images, targets in loader:
         images = [image.to(device, non_blocking=True) for image in images]
         targets = [{key: value.to(device, non_blocking=True) if torch.is_tensor(value) else value
@@ -101,6 +103,14 @@ def run_train_epoch(model, loader, optimizer, device):
             sums[name] = sums.get(name, 0.0) + float(value.detach().item())
         sums["total_loss"] = sums.get("total_loss", 0.0) + float(loss.detach().item())
         batches += 1
+        images_seen += len(images)
+        if batches % 50 == 0 or batches == len(loader):
+            elapsed = time.perf_counter() - started
+            print(f"Epoch {epoch}/{total_epochs} | "
+                  f"images {images_seen}/{len(loader.dataset)} | "
+                  f"batches {batches}/{len(loader)} | "
+                  f"elapsed {elapsed / 60:.1f} min | "
+                  f"average loss {sums['total_loss'] / batches:.4f}", flush=True)
     return {name: value / max(batches, 1) for name, value in sums.items()}
 
 
@@ -243,7 +253,8 @@ def main():
 
         for epoch in range(start_epoch, config.epochs):
             started = time.perf_counter()
-            train_losses = run_train_epoch(model, train_loader, optimizer, device)
+            train_losses = run_train_epoch(model, train_loader, optimizer, device,
+                                           epoch + 1, config.epochs)
             val_losses = run_validation_loss(model, val_loader, device) if val_loader else {}
             elapsed = time.perf_counter() - started
             scheduler.step()

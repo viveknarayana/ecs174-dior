@@ -1,4 +1,3 @@
-import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -6,25 +5,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import to_tensor
-
-CLASS_NAMES = [
-    "airplane", "airport", "baseballfield",
-    "basketballcourt", "bridge", "chimney",
-    "dam", "expresswayservicearea",
-    "expresswaytollstation", "golffield",
-    "groundtrackfield", "harbor", "overpass",
-    "ship", "stadium", "storagetank",
-    "tenniscourt", "trainstation",
-    "vehicle", "windmill"
-]
-
-CLASS_TO_ID = {
-    name: i + 1
-    for i, name in enumerate(CLASS_NAMES)
-}
-
-def normalize_name(name):
-    return re.sub(r"[^a-z0-9]", "", name.lower())
+from classes import CLASS_NAMES, CLASS_TO_ID, normalize_class_name
 
 class DIORDataset(Dataset):
     def __init__(self, root, split="train"):
@@ -69,7 +50,7 @@ class DIORDataset(Dataset):
         labels = []
 
         for obj in root.findall("object"):
-            name = normalize_name(
+            name = normalize_class_name(
                 obj.findtext("name", default="")
             )
 

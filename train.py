@@ -266,6 +266,7 @@ def main():
                 save_checkpoint(run_dir / "best.pth", model, optimizer, scheduler,
                                 epoch + 1, best_val_loss, config)
             save_loss_plot(log_path, run_dir / "loss_curves.png")
+            print(f"EPOCH_FILES_READY {epoch + 1}", flush=True)
 
     print(f"Finished. Checkpoints, log, and loss plot: {run_dir}")
 

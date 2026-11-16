@@ -29,9 +29,14 @@ CLASS_NAMES = [
 
 
 def normalize_class_name(name):
-    """Normalize names such as XML's 'baseballfield' and 'harbor'."""
+    """Normalize XML labels to the shared names used by the project."""
     normalized = re.sub(r"[^a-z0-9]", "", name.lower())
-    return "harbour" if normalized == "harbor" else normalized
+    aliases = {
+        "harbor": "harbour",
+        # DIOR's XML uses "golffield" for the golf-course category.
+        "golffield": "golfcourse",
+    }
+    return aliases.get(normalized, normalized)
 
 
 CLASS_TO_ID = {

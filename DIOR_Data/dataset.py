@@ -14,13 +14,17 @@ class DIORDataset(Dataset):
         split_dir = self.root / "ImageSets" / "Main"
         if not split_dir.is_dir():
             split_dir = self.root / "Main"
-        split_file = split_dir / f"{split}.txt"
+        def read_ids(name):
+            with (split_dir / f"{name}.txt").open() as f:
+                return [line.strip().removesuffix(".jpg") for line in f if line.strip()]
 
-        with open(split_file) as f:
-            self.ids = [
-                line.strip().removesuffix(".jpg")
-                for line in f if line.strip()
-            ]
+        if split == "trainval":
+            train_ids, val_ids = read_ids("train"), read_ids("val")
+            if set(train_ids) & set(val_ids):
+                raise ValueError("Training and validation split files overlap")
+            self.ids = train_ids + val_ids
+        else:
+            self.ids = read_ids(split)
           
         image_folder = (
             "JPEGImages-test"

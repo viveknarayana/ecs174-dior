@@ -10,6 +10,7 @@ class Config:
     data_root: Path = Path(".")
     output_root: Path = Path("outputs")
     backbone: str = "resnet50"  # resnet50 or mobilenet
+    train_split: str = "trainval"
 
     image_size: int = 640
     batch_size: int = 2

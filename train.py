@@ -29,6 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-root", type=Path, default=CONFIG.data_root)
     parser.add_argument("--backbone", choices=("resnet50", "mobilenet"), default=CONFIG.backbone)
+    parser.add_argument("--train-split", choices=("train", "trainval"), default=CONFIG.train_split)
     parser.add_argument("--output-root", type=Path, default=CONFIG.output_root)
     parser.add_argument("--epochs", type=int, default=CONFIG.epochs)
     parser.add_argument("--batch-size", type=int, default=CONFIG.batch_size)
@@ -175,21 +176,25 @@ def main():
     config.data_root = args.data_root
     config.output_root = args.output_root
     config.backbone = args.backbone
+    config.train_split = args.train_split
     config.epochs = args.epochs
     config.batch_size = args.batch_size
     config.workers = args.workers
     config.tiny_test = args.tiny_test
     config.tiny_train_images = args.tiny_train_images
     config.tiny_validation_images = args.tiny_validation_images
-    config.use_validation = not args.no_validation
+    config.use_validation = args.train_split == "train" and not args.no_validation
 
     seed_everything(config.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     run_dir = config.output_root / config.backbone
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    train_data = DIORDataset(config.data_root, split="train")
+    # Previous development setup: DIORDataset(config.data_root, split="train")
+    train_data = DIORDataset(config.data_root, split=config.train_split)
     val_data = DIORDataset(config.data_root, split="val") if config.use_validation else None
+    print(f"Training split: {config.train_split} ({len(train_data)} images); "
+          f"validation: {'val' if val_data is not None else 'disabled'}")
     if config.tiny_test:
         train_data = Subset(train_data, range(min(config.tiny_train_images, len(train_data))))
         if val_data is not None:
@@ -213,6 +218,9 @@ def main():
     best_val_loss = float("inf")
     if args.resume:
         checkpoint = torch.load(args.resume, map_location=device, weights_only=False)
+        checkpoint_split = checkpoint.get("config", {}).get("train_split", "train")
+        if checkpoint_split != config.train_split:
+            raise ValueError(f"Checkpoint uses {checkpoint_split}, but this run uses {config.train_split}")
         if checkpoint["backbone"] != config.backbone:
             raise ValueError("Resume checkpoint backbone does not match --backbone")
         if checkpoint["class_names"] != CLASS_NAMES:

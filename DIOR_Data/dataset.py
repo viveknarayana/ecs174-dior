@@ -66,13 +66,14 @@ class DIORDataset(Dataset):
             xmax = float(bbox.findtext("xmax"))
             ymax = float(bbox.findtext("ymax"))
 
-            if not (
-                0 <= xmin < xmax <= width
-                and 0 <= ymin < ymax <= height
-            ):
-                raise ValueError(
-                    f"Invalid box in {xml_path}"
-                )
+            # Keep boxes inside the image. Malformed zero-area boxes are
+            # excluded as annotations; the image and its other objects remain.
+            xmin = min(max(xmin, 0.0), float(width))
+            ymin = min(max(ymin, 0.0), float(height))
+            xmax = min(max(xmax, 0.0), float(width))
+            ymax = min(max(ymax, 0.0), float(height))
+            if xmax <= xmin or ymax <= ymin:
+                continue
 
             boxes.append([xmin, ymin, xmax, ymax])
             labels.append(CLASS_TO_ID[name])

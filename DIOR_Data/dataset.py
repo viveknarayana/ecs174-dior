@@ -11,7 +11,10 @@ class DIORDataset(Dataset):
     def __init__(self, root, split="train"):
         self.root = Path(root)
 
-        split_file = self.root / "Main" / f"{split}.txt"
+        split_dir = self.root / "ImageSets" / "Main"
+        if not split_dir.is_dir():
+            split_dir = self.root / "Main"
+        split_file = split_dir / f"{split}.txt"
 
         with open(split_file) as f:
             self.ids = [

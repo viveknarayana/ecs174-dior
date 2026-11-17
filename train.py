@@ -72,10 +72,13 @@ def build_model(backbone, image_size):
 
 
 def make_loader(dataset, batch_size, shuffle, workers):
+    generator = torch.Generator()
+    generator.seed()
     return DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
+        generator=generator,
         num_workers=workers,
         pin_memory=torch.cuda.is_available(),
         collate_fn=collate_fn,

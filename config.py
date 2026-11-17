@@ -12,7 +12,8 @@ class Config:
     backbone: str = "resnet50"  # resnet50 or mobilenet
     train_split: str = "trainval"
 
-    image_size: int = 640
+    # DIOR's 800×800 images match Torchvision's default minimum resize.
+    image_size: int = 800
     batch_size: int = 2
     epochs: int = 10
     workers: int = 2

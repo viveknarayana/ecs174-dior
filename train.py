@@ -51,19 +51,19 @@ def seed_everything(seed):
 
 def build_model(backbone, image_size):
     """Load COCO Faster R-CNN, replace its class/box predictor, and resize internally."""
+    # Preserve the original 640 resize when loading older checkpoints.
+    resize_options = {} if image_size == 800 else {"min_size": image_size, "max_size": image_size}
     if backbone == "resnet50":
         model = fasterrcnn_resnet50_fpn(
             weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT,
             trainable_backbone_layers=5,
-            min_size=image_size,
-            max_size=image_size,
+            **resize_options,
         )
     else:
         model = fasterrcnn_mobilenet_v3_large_fpn(
             weights=FasterRCNN_MobileNet_V3_Large_FPN_Weights.DEFAULT,
             trainable_backbone_layers=6,
-            min_size=image_size,
-            max_size=image_size,
+            **resize_options,
         )
 
     in_features = model.roi_heads.box_predictor.cls_score.in_features
@@ -231,6 +231,8 @@ def main():
         checkpoint_split = checkpoint.get("config", {}).get("train_split", "train")
         if checkpoint_split != config.train_split:
             raise ValueError(f"Checkpoint uses {checkpoint_split}, but this run uses {config.train_split}")
+        if checkpoint.get("config", {}).get("image_size") != config.image_size:
+            raise ValueError("Checkpoint image size does not match this run")
         if checkpoint["backbone"] != config.backbone:
             raise ValueError("Resume checkpoint backbone does not match --backbone")
         if checkpoint["class_names"] != CLASS_NAMES:

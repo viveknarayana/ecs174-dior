@@ -2,7 +2,7 @@
 
 `config.py` contains the shared defaults. `train.py` supports both required backbones so the ResNet-50 and MobileNet experiments use the same training implementation.
 
-For Google Colab setup, dataset download, persistent Drive checkpoints, a smoke test, and full runs, open [`notebooks/DIOR_Colab_Training.ipynb`](notebooks/DIOR_Colab_Training.ipynb).
+For a Google Colab training example, see [`notebooks/ResNet50_Colab_Training.ipynb`](notebooks/ResNet50_Colab_Training.ipynb). Copy the setup cells you need into your own model-specific notebook.
 
 The default dataset root is the repository directory and expects the extracted folders `JPEGImages-trainval/`, `JPEGImages-test/`, `Annotations/`, and `ImageSets/Main/`. If the files live elsewhere, pass that directory with `--data-root`.
 
